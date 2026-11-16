@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مغامرة جزيرة الحروف المفقودة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; user-select: none; }
+        body { margin: 0; padding: 20px 0; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden; }
+        .game-container { background: #fffdf7; width: 90%; max-width: 800px; border-radius: 30px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 8px solid #ffb703; text-align: center; position: relative; }
+        h1 { color: #fb8500; font-size: clamp(1.5rem, 5vw, 2.2rem); margin-top: 0; text-shadow: 2px 2px 0px #ffe8a3; }
+        .characters-bar { display: flex; justify-content: space-around; align-items: center; background: #e0fbfc; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 3px dashed #00b4d8; }
+        .character { font-size: 3.5rem; transition: transform 0.3s ease; }
+        .character-name { font-size: 1rem; font-weight: 800; color: #023047; }
+        .bounce { animation: bounce 0.6s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .progress-map { display: flex; justify-content: space-between; align-items: center; margin: 25px 0; padding: 10px 20px; background: #ffe8d6; border-radius: 50px; position: relative; }
+        .step { width: 45px; height: 45px; border-radius: 50%; background: #cb997e; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; z-index: 2; transition: all 0.4s; }
+        .step.active { background: #ffb703; transform: scale(1.2); box-shadow: 0 0 15px #ffb703; }
+        .step.done { background: #2a9d8f; }
+        .question-box { background: #ffffff; border: 4px solid #8ecae6; border-radius: 25px; padding: 25px; margin: 20px 0; font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; color: #023047; box-shadow: 0 8px 0 #8ecae6; }
+        .blank { display: inline-block; min-width: 90px; min-height: 45px; border-bottom: 5px dashed #fb8500; color: #fb8500; margin: 0 10px; vertical-align: middle; }
+        .stones-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 25px; }
+        .stone { padding: 15px 30px; font-size: 1.6rem; font-weight: 800; color: white; border: none; border-radius: 25px 25px 35px 35px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .stone:hover { transform: translateY(-5px) scale(1.05); }
+        .stone:active { transform: translateY(2px); }
+        .stone:disabled { opacity: .75; cursor: default; }
+        .stone-red { background: #e63946; box-shadow: 0 6px 0 #9e2a2b; }
+        .stone-orange { background: #f77f00; box-shadow: 0 6px 0 #b55d00; }
+        .stone-green { background: #2a9d8f; box-shadow: 0 6px 0 #1d6e64; }
+        .stone-blue { background: #0077b6; box-shadow: 0 6px 0 #023e8a; }
+        .stone-purple { background: #8338ec; box-shadow: 0 6px 0 #560bad; }
+        .feedback { margin-top: 20px; font-size: 1.2rem; font-weight: bold; min-height: 35px; }
+        .win-screen { display: none; }
+        .btn-restart { background: #2a9d8f; color: white; border: none; padding: 15px 40px; font-size: 1.5rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 #1d6e64; margin-top: 20px; }
+        .btn-restart:hover { background: #21867a; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>🏝️ مغامرة جزيرة الحروف المفقودة 🦜</h1>
+    <div class="characters-bar">
+        <div><div class="character" id="captain">🏴‍☠️</div><div class="character-name">القبطان فَطين</div></div>
+        <div><div class="character" id="parrot">🦜</div><div class="character-name">الببغاء لَبيب</div></div>
+        <div><div class="character" id="monster">👾</div><div class="character-name">الوحش نَسّاي</div></div>
+    </div>
+    <div id="game-area">
+        <div class="progress-map" id="map"><div class="step active">1</div><div class="step">2</div><div class="step">3</div><div class="step">4</div><div class="step">5</div><div class="step">🏆</div></div>
+        <div class="question-box" id="question-text">جاري تحميل المغامرة...</div>
+        <p style="color:#555;font-weight:bold;">اختر حجر الجر الملون لإصلاح الجسر:</p>
+        <div class="stones-container" id="stones"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="win-screen" id="win-screen">
+        <div style="font-size:5rem;">💎🏆🎉</div>
+        <h2 style="color:#2a9d8f;font-size:2.2rem;">أحسنت يا بطل! وصلت إلى الكنز!</h2>
+        <p style="font-size:1.4rem;color:#023047;">لقد أصلحت جميع الجسور وهزمت الوحش نَسّاي بذكائك!</p>
+        <button class="btn-restart" onclick="restartGame()">العب مرة أخرى 🔄</button>
+    </div>
+</div>
+<script>
+const questions = [
+ {part1:"ذَهَبَ أَحْمَدُ",part2:"المَدْرَسَةِ صَبَاحًا.",answer:"إِلَى",options:[{text:"فِي",color:"stone-red"},{text:"إِلَى",color:"stone-green"},{text:"عَنْ",color:"stone-purple"}]},
+ {part1:"يَسْبَحُ السَّمَكُ",part2:"المَاءِ.",answer:"فِي",options:[{text:"عَلَى",color:"stone-orange"},{text:"مِنْ",color:"stone-blue"},{text:"فِي",color:"stone-red"}]},
+ {part1:"وَضَعَتْ سَارَةُ الكِتَابَ",part2:"الطَّاوِلَةِ.",answer:"عَلَى",options:[{text:"عَلَى",color:"stone-orange"},{text:"إِلَى",color:"stone-green"},{text:"مِنْ",color:"stone-blue"}]},
+ {part1:"أَخَذْتُ القَلَمَ",part2:"الحَقِيبَةِ.",answer:"مِنْ",options:[{text:"فِي",color:"stone-red"},{text:"مِنْ",color:"stone-blue"},{text:"عَلَى",color:"stone-orange"}]},
+ {part1:"يَبْحَثُ الصَّيَّادُ",part2:"اللُّؤْلُؤِ.",answer:"عَنْ",options:[{text:"إِلَى",color:"stone-green"},{text:"عَنْ",color:"stone-purple"},{text:"فِي",color:"stone-red"}]}
+];
+let currentStep=0;
+let audioCtx;
+function playSound(type){
+ try {
+  audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended") audioCtx.resume();
+  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+  osc.connect(gain);gain.connect(audioCtx.destination);
+  const now=audioCtx.currentTime;
+  if(type==="win"){
+   osc.frequency.setValueAtTime(523.25,now);osc.frequency.setValueAtTime(659.25,now+.1);osc.frequency.setValueAtTime(783.99,now+.2);
+   gain.gain.setValueAtTime(.15,now);gain.gain.exponentialRampToValueAtTime(.01,now+.4);osc.start(now);osc.stop(now+.4);
+  } else {
+   osc.type="sawtooth";osc.frequency.setValueAtTime(150,now);gain.gain.setValueAtTime(.12,now);gain.gain.exponentialRampToValueAtTime(.01,now+.3);osc.start(now);osc.stop(now+.3);
+  }
+ } catch(e) {}
+}
+function loadQuestion(){
+ const q=questions[currentStep],qBox=document.getElementById("question-text");
+ qBox.innerHTML=`${q.part1} <span class="blank" id="blank-space">؟</span> ${q.part2}`;
+ const stonesDiv=document.getElementById("stones");stonesDiv.innerHTML="";
+ q.options.forEach(opt=>{const btn=document.createElement("button");btn.className=`stone ${opt.color}`;btn.innerText=opt.text;btn.onclick=()=>checkAnswer(opt.text);stonesDiv.appendChild(btn);});
+ document.getElementById("feedback").innerText="";updateMap();
+}
+function checkAnswer(selected){
+ const q=questions[currentStep],feedback=document.getElementById("feedback"),parrot=document.getElementById("parrot"),monster=document.getElementById("monster");
+ if(selected===q.answer){
+  playSound("win");document.getElementById("blank-space").innerText=selected;feedback.style.color="#2a9d8f";feedback.innerText="رائع! الببغاء لَبيب سعيد، لقد عبرنا الجسر! 🎉";parrot.classList.add("bounce");
+  document.querySelectorAll(".stone").forEach(b=>b.disabled=true);
+  setTimeout(()=>{parrot.classList.remove("bounce");currentStep++;if(currentStep<questions.length)loadQuestion();else showWinScreen();},1500);
+ } else {
+  playSound("wrong");feedback.style.color="#e63946";feedback.innerText="أوه! الوحش نَسّاي يضحك، حاول مرة أخرى يا بطل! 👾";monster.classList.add("shake");setTimeout(()=>monster.classList.remove("shake"),400);
+ }
+}
+function updateMap(){
+ document.querySelectorAll(".step").forEach((step,index)=>{
+  step.classList.remove("active","done");
+  if(index<currentStep){step.classList.add("done");step.innerText="✔";}
+  else if(index===currentStep){step.classList.add("active");step.innerText=index+1;}
+  else if(index<5)step.innerText=index+1;
+ });
+}
+function showWinScreen(){document.getElementById("game-area").style.display="none";document.getElementById("win-screen").style.display="block";document.getElementById("captain").classList.add("bounce");document.getElementById("parrot").classList.add("bounce");}
+function restartGame(){currentStep=0;document.getElementById("game-area").style.display="block";document.getElementById("win-screen").style.display="none";document.getElementById("captain").classList.remove("bounce");document.getElementById("parrot").classList.remove("bounce");loadQuestion();}
+loadQuestion();
+</script>
+</body>
+</html>
